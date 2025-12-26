@@ -132,10 +132,10 @@ function InputPageContent() {
       // LINEアプリを起動（URLスキーム）
       const storeNameText = payload.store_name || "店";
       const lineMessage = `${storeNameText}の代金 ¥${calculatedRequestAmount.toLocaleString()} お願い！ レシート詳細: ${transactionUrl}`;
-      const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(lineMessage)}`;
+      const lineUrl = `https://line.me/R/share?text=${encodeURIComponent(lineMessage)}`;
       
-      // LINEアプリを開く（新しいタブで）
-      window.open(lineUrl, "_blank");
+      // LINEアプリを開く
+      window.location.href = lineUrl;
       
       // 送信完了画面に遷移
       router.push("/input?mode=ai&step=complete");
