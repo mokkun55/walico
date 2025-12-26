@@ -402,19 +402,22 @@ ${transactionUrl}`;
     return (
       <div className="flex min-h-screen flex-col bg-black">
         {/* カメラプレビューエリア */}
-        <div className="flex-1 flex items-center justify-center bg-gray-900 relative overflow-hidden">
-          <Webcam
-            ref={webcamRef}
-            audio={false}
-            screenshotFormat="image/jpeg"
-            videoConstraints={{
-              facingMode: "environment", // 背面カメラを使用
-            }}
-            className="w-full h-full object-cover"
-          />
+        <div className="flex-1 flex items-center justify-center bg-black relative overflow-hidden">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Webcam
+              ref={webcamRef}
+              audio={false}
+              screenshotFormat="image/jpeg"
+              videoConstraints={{
+                facingMode: "environment", // 背面カメラを使用
+                aspectRatio: { ideal: 4 / 3 }, // アスペクト比を指定
+              }}
+              className="w-full h-full object-contain"
+            />
+          </div>
 
           {/* ガイドライン */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
             <div className="w-[85%] aspect-3/4 border-2 border-white/50 rounded-2xl" />
           </div>
         </div>
