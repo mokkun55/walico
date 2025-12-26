@@ -130,6 +130,18 @@ function InputPageContent() {
       const data = await response.json();
       const transactionUrl = `${window.location.origin}${data.url}`;
 
+      // localStorageにトランザクションIDを保存
+      const savedIds = JSON.parse(
+        localStorage.getItem("walico-transaction-ids") || "[]"
+      );
+      if (!savedIds.includes(data.id)) {
+        savedIds.push(data.id);
+        localStorage.setItem(
+          "walico-transaction-ids",
+          JSON.stringify(savedIds)
+        );
+      }
+
       // LINEアプリを起動（URLスキーム）
       const storeNameText = payload.store_name || "店";
       const lineMessage = `ワリコだよ👛

@@ -1,17 +1,93 @@
 "use client";
 
-import { Camera, Keyboard, RotateCcw } from "lucide-react";
+import { Camera, Check, Clock, Keyboard, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+type TransactionHistory = {
+  id: string;
+  store_name: string | null;
+  request_amount: number;
+  status: "pending" | "paid";
+  created_at: number;
+};
+
 export default function Home() {
   const [hasDraft, setHasDraft] = useState(false);
+  const [history, setHistory] = useState<TransactionHistory[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
   useEffect(() => {
     // LocalStorageから未完了のデータをチェック
     const draft = localStorage.getItem("walico-draft");
     setHasDraft(!!draft);
+
+    // 履歴を読み込む
+    loadHistory();
   }, []);
+
+  const loadHistory = async () => {
+    setIsLoadingHistory(true);
+    try {
+      const savedIds = JSON.parse(
+        localStorage.getItem("walico-transaction-ids") || "[]"
+      );
+
+      if (savedIds.length === 0) {
+        setHistory([]);
+        return;
+      }
+
+      // 各トランザクションの情報を取得
+      const historyPromises = savedIds.map(async (id: string) => {
+        try {
+          const response = await fetch(`/api/transactions/${id}`);
+          if (!response.ok) {
+            // 404や410の場合は履歴から削除
+            if (response.status === 404 || response.status === 410) {
+              return null;
+            }
+            throw new Error("Failed to fetch transaction");
+          }
+          const data = await response.json();
+          return {
+            id: data.id,
+            store_name: data.store_name,
+            request_amount: data.request_amount,
+            status: data.status,
+            created_at: data.created_at,
+          };
+        } catch (error) {
+          console.error(`Error fetching transaction ${id}:`, error);
+          return null;
+        }
+      });
+
+      const results = await Promise.all(historyPromises);
+      const validHistory = results.filter(
+        (item): item is TransactionHistory => item !== null
+      );
+
+      // 作成日時の降順でソート
+      validHistory.sort((a, b) => b.created_at - a.created_at);
+
+      setHistory(validHistory);
+
+      // 無効なIDをlocalStorageから削除
+      const validIds = validHistory.map((item) => item.id);
+      const updatedIds = savedIds.filter((id: string) =>
+        validIds.includes(id)
+      );
+      localStorage.setItem(
+        "walico-transaction-ids",
+        JSON.stringify(updatedIds)
+      );
+    } catch (error) {
+      console.error("Error loading history:", error);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
 
   const handleResume = () => {
     // 前回の続きから再開（将来的に実装）
@@ -19,17 +95,93 @@ export default function Home() {
     window.location.href = "/input?mode=ai&resume=true";
   };
 
+  const formatDate = (timestamp: number) => {
+    const date = new Date(timestamp * 1000);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    if (days === 0) {
+      return "今日";
+    } else if (days === 1) {
+      return "昨日";
+    } else if (days < 7) {
+      return `${days}日前`;
+    } else {
+      return date.toLocaleDateString("ja-JP", {
+        month: "short",
+        day: "numeric",
+      });
+    }
+  };
+
   return (
-    <div className="flex min-h-screen flex-col bg-white">
-      {/* Center: Branding */}
-      <div className="flex flex-1 flex-col items-center justify-center px-4 pb-40">
-        <h1 className="text-5xl font-bold text-gray-800">Walico</h1>
-        <p className="mt-3 text-base text-gray-500">3秒で割り勘。</p>
+    <div className="flex min-h-screen flex-col bg-white pb-40">
+      {/* アプリ名 */}
+      <div className="px-4 pt-12 pb-6">
+        <h1 className="text-2xl font-bold text-gray-800">Walico</h1>
+        <p className="mt-1 text-xs text-gray-500">3秒で割り勘。</p>
+      </div>
+
+      {/* 履歴セクション */}
+      <div className="px-4 pb-4">
+        <h2 className="mb-3 text-sm font-semibold text-gray-500">履歴</h2>
+        {isLoadingHistory ? (
+          <div className="text-center py-4 text-gray-400 text-sm">
+            読み込み中...
+          </div>
+        ) : history.length > 0 ? (
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {history.map((item) => (
+              <Link
+                key={item.id}
+                href={`/r/${item.id}`}
+                className="block rounded-2xl border border-gray-200 bg-white p-4 transition-colors hover:bg-gray-50 active:bg-gray-100"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      {item.status === "paid" ? (
+                        <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                      ) : (
+                        <Clock className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                      )}
+                      <span
+                        className={`text-xs font-medium ${
+                          item.status === "paid"
+                            ? "text-emerald-600"
+                            : "text-amber-600"
+                        }`}
+                      >
+                        {item.status === "paid" ? "完了" : "未完了"}
+                      </span>
+                    </div>
+                    <p className="text-sm font-medium text-gray-800 truncate">
+                      {item.store_name || "（店名不明）"}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {formatDate(item.created_at)}
+                    </p>
+                  </div>
+                  <div className="ml-4 text-right">
+                    <p className="text-lg font-bold text-gray-800">
+                      ¥{item.request_amount.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-4 text-gray-400 text-sm">
+            履歴がありません
+          </div>
+        )}
       </div>
 
       {/* 前回の続きから再開（未完了データがある場合のみ表示） */}
       {hasDraft && (
-        <div className="px-4 pb-4">
+        <div className="px-4 pb-4 mb-24">
           <button
             type="button"
             onClick={handleResume}
