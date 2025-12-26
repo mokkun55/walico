@@ -1,65 +1,68 @@
-import Image from "next/image";
+"use client";
+
+import { Camera, Keyboard, RotateCcw } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function Home() {
+  const [hasDraft, setHasDraft] = useState(false);
+
+  useEffect(() => {
+    // LocalStorageから未完了のデータをチェック
+    const draft = localStorage.getItem("walico-draft");
+    setHasDraft(!!draft);
+  }, []);
+
+  const handleResume = () => {
+    // 前回の続きから再開（将来的に実装）
+    // 今は単にinputページに遷移
+    window.location.href = "/input?mode=ai&resume=true";
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="flex min-h-screen flex-col bg-white">
+      {/* Center: Branding */}
+      <div className="flex flex-1 flex-col items-center justify-center px-4 pb-40">
+        <h1 className="text-5xl font-bold text-gray-800">Walico</h1>
+        <p className="mt-3 text-base text-gray-500">3秒で割り勘。</p>
+      </div>
+
+      {/* 前回の続きから再開（未完了データがある場合のみ表示） */}
+      {hasDraft && (
+        <div className="px-4 pb-4">
+          <button
+            type="button"
+            onClick={handleResume}
+            className="w-full rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <div className="flex items-center justify-center gap-2">
+              <RotateCcw className="h-4 w-4" />
+              <span>前回の続きから再開</span>
+            </div>
+          </button>
         </div>
-      </main>
+      )}
+
+      {/* Action Area (Bottom Fixed) */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-6 shadow-lg">
+        {/* Primary: レシート撮影 */}
+        <Link
+          href="/input?mode=ai&step=camera"
+          className="flex h-20 w-full items-center justify-center gap-3 rounded-3xl bg-emerald-500 text-white shadow-lg transition-all hover:bg-emerald-600 hover:shadow-xl active:bg-emerald-600 active:scale-[0.98]"
+        >
+          <Camera className="h-8 w-8" />
+          <span className="text-xl font-bold">レシート撮影</span>
+        </Link>
+
+        {/* Secondary: 手入力 */}
+        <Link
+          href="/input?mode=manual"
+          className="mt-4 flex h-14 w-full items-center justify-center gap-2 text-gray-500 transition-colors hover:text-gray-800"
+        >
+          <Keyboard className="h-5 w-5" />
+          <span className="text-base font-medium">手入力</span>
+        </Link>
+      </div>
     </div>
   );
 }

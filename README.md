@@ -1,5 +1,27 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## 環境変数の設定
+
+プロジェクトルートに `.env.local` ファイルを作成し、以下の環境変数を設定してください：
+
+```env
+# Turso Database
+TURSO_DATABASE_URL=libsql://...
+TURSO_AUTH_TOKEN=...
+
+# Gemini API (AI解析)
+GEMINI_API_KEY=your-gemini-api-key
+GEMINI_MODEL_NAME=gemini-2.0-flash-exp  # オプション: デフォルトは gemini-2.0-flash-exp
+```
+
+### モデルの変更について
+
+`GEMINI_MODEL_NAME` 環境変数で使用するGeminiモデルを変更できます。利用可能なモデル例：
+- `gemini-2.0-flash-exp` (デフォルト)
+- `gemini-2.0-flash-lite`
+- `gemini-1.5-pro`
+- その他Gemini APIで利用可能なモデル
+
 ## Getting Started
 
 First, run the development server:
