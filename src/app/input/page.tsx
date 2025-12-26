@@ -5,6 +5,7 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  Copy,
   Image as ImageIcon,
   Loader2,
   Plus,
@@ -57,6 +58,9 @@ function InputPageContent() {
   const [editableItems, setEditableItems] = useState<
     Array<{ name: string; price: number }>
   >([]);
+
+  // URLコピー機能の状態
+  const [copied, setCopied] = useState(false);
 
   // カメラ撮影処理
   const handleCapture = () => {
@@ -488,6 +492,32 @@ ${transactionUrl}`;
     );
   }
 
+  // URLコピー機能
+  const handleCopyUrl = async () => {
+    try {
+      // localStorageから最新のトランザクションIDを取得
+      const savedIds = JSON.parse(
+        localStorage.getItem("walico-transaction-ids") || "[]"
+      );
+      if (savedIds.length === 0) {
+        alert("URLが見つかりません");
+        return;
+      }
+
+      // 最新のIDを使用してURLを構築
+      const latestId = savedIds[savedIds.length - 1];
+      const transactionUrl = `${window.location.origin}/r/${latestId}`;
+
+      // クリップボードにコピー
+      await navigator.clipboard.writeText(transactionUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error("Failed to copy URL:", error);
+      alert("URLのコピーに失敗しました");
+    }
+  };
+
   // 送信完了画面
   if (step === "complete") {
     return (
@@ -501,10 +531,24 @@ ${transactionUrl}`;
         <h2 className="mb-2 text-3xl font-bold">送信完了！</h2>
 
         {/* 説明文 */}
-        <p className="mb-8 text-emerald-100">LINEアプリが起動しました。</p>
+        <p className="mb-4 text-emerald-100">LINEアプリが起動しました。</p>
+        <p className="mb-8 text-emerald-100 text-sm">
+          LINEが開かなかった場合は、下のボタンからURLをコピーできます
+        </p>
 
-        {/* ホームに戻るボタン */}
-        <div className="w-full max-w-xs">
+        {/* ボタンエリア */}
+        <div className="w-full max-w-xs space-y-3">
+          {/* URLコピーボタン */}
+          <button
+            type="button"
+            onClick={handleCopyUrl}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-white/40 bg-white/20 py-3 font-bold text-white transition-colors hover:bg-white/30"
+          >
+            <Copy className="h-5 w-5" />
+            <span>{copied ? "コピーしました！" : "URLをコピー"}</span>
+          </button>
+
+          {/* ホームに戻るボタン */}
           <Link
             href="/"
             className="block w-full py-3 text-emerald-100 font-bold text-sm transition-colors hover:text-white"
