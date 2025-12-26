@@ -91,7 +91,7 @@ export default function ReceiverPage() {
       }
 
       const data = await response.json();
-      
+
       // トランザクション状態を更新
       if (transaction) {
         setTransaction({ ...transaction, status: "paid" });
@@ -134,7 +134,9 @@ export default function ReceiverPage() {
     return (
       <div className="flex h-screen flex-col items-center justify-center bg-gray-50 p-6 text-center">
         <p className="text-lg font-semibold text-gray-800 mb-2">エラー</p>
-        <p className="text-gray-500">{error || "トランザクションが見つかりません"}</p>
+        <p className="text-gray-500">
+          {error || "トランザクションが見つかりません"}
+        </p>
         <Link
           href="/"
           className="mt-6 text-emerald-500 hover:text-emerald-600 font-medium"
@@ -200,7 +202,11 @@ export default function ReceiverPage() {
             <div className="flex justify-between">
               <span className="text-gray-500">負担率</span>
               <span className="font-medium">
-                {calculateRatio(transaction.total_amount, transaction.request_amount)}% (あなた)
+                {calculateRatio(
+                  transaction.total_amount,
+                  transaction.request_amount
+                )}
+                % (あなた)
               </span>
             </div>
             <div className="my-2 h-px bg-gray-100" />

@@ -2,12 +2,13 @@
 
 import {
   ArrowLeft,
-  Camera,
   Check,
   ChevronDown,
   ChevronUp,
   Image as ImageIcon,
   Loader2,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -49,6 +50,13 @@ function InputPageContent() {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+
+  // AI解析結果の編集可能な値（AIモード用）
+  const [editableStoreName, setEditableStoreName] = useState<string>("");
+  const [editableTotalAmount, setEditableTotalAmount] = useState<number>(0);
+  const [editableItems, setEditableItems] = useState<
+    Array<{ name: string; price: number }>
+  >([]);
 
   // カメラ撮影処理
   const handleCapture = () => {
@@ -114,7 +122,9 @@ function InputPageContent() {
 
           if (!uploadResponse.ok) {
             const errorData = await uploadResponse.json();
-            throw new Error(errorData.error || "画像のアップロードに失敗しました");
+            throw new Error(
+              errorData.error || "画像のアップロードに失敗しました"
+            );
           }
 
           const uploadData = await uploadResponse.json();
@@ -126,22 +136,26 @@ function InputPageContent() {
         }
       }
 
-      // APIに送信するデータを準備
+      // APIに送信するデータを準備（編集可能な値を使用）
       const payload = {
-        store_name: isAIMode ? aiResult?.store_name || null : storeName || null,
-        total_amount: isAIMode ? aiResult?.total_amount || 0 : totalAmount,
+        store_name: isAIMode ? editableStoreName || null : storeName || null,
+        total_amount: isAIMode ? editableTotalAmount : totalAmount,
         request_amount: calculatedRequestAmount,
         receipt_image_url: receiptImageUrl,
         items_json:
-          isAIMode && aiResult?.items
-            ? aiResult.items.map((item, index) => {
-                const assignment = itemAssignments[index] || "split";
-                return {
-                  name: item.name,
-                  price: item.price,
-                  assignment, // 仕分け情報も保存（オプション）
-                };
-              })
+          editableItems.length > 0
+            ? editableItems
+                .filter((item) => item.name.trim() !== "" && item.price > 0)
+                .map((item) => {
+                  // フィルタ後のインデックスで仕分け情報を取得
+                  const originalIndex = editableItems.indexOf(item);
+                  const assignment = itemAssignments[originalIndex] || "split";
+                  return {
+                    name: item.name,
+                    price: item.price,
+                    assignment, // 仕分け情報も保存（オプション）
+                  };
+                })
             : null,
       };
 
@@ -231,6 +245,10 @@ ${transactionUrl}`;
 
           const result: AIResult = await analyzeResponse.json();
           setAiResult(result);
+          // 編集可能な値に初期値を設定
+          setEditableStoreName(result.store_name || "");
+          setEditableTotalAmount(result.total_amount || 0);
+          setEditableItems(result.items || []);
 
           // 解析結果画面に遷移
           router.push("/input?mode=ai&step=result");
@@ -248,10 +266,14 @@ ${transactionUrl}`;
     }
   }, [step, capturedImage, isAnalyzing, aiResult, router]);
 
-  // データの取得
-  const currentTotalAmount = isAIMode
-    ? aiResult?.total_amount || 0
-    : totalAmount;
+  // データの取得（編集可能な値を使用）
+  // 明細モードが開いている場合は明細から合計を計算、そうでない場合は入力値を使用
+  const currentTotalAmount =
+    isDetailsOpen && editableItems.length > 0
+      ? editableItems.reduce((sum, item) => sum + item.price, 0)
+      : isAIMode
+      ? editableTotalAmount
+      : totalAmount;
 
   // 割り勘計算
   const requestAmount = Math.round(
@@ -260,10 +282,10 @@ ${transactionUrl}`;
 
   // 明細モードでの計算（簡易版）
   const calculateDetailedAmount = () => {
-    if (!isAIMode || !aiResult) return requestAmount;
+    if (editableItems.length === 0) return requestAmount;
 
     let otherAmount = 0;
-    aiResult.items.forEach((item, index) => {
+    editableItems.forEach((item, index) => {
       const assignment = itemAssignments[index] || "split";
       if (assignment === "other") {
         otherAmount += item.price;
@@ -308,6 +330,71 @@ ${transactionUrl}`;
       case "split":
         return "bg-gray-100 text-gray-700";
     }
+  };
+
+  // 商品の編集関数
+  const updateItemName = (index: number, name: string) => {
+    setEditableItems((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], name };
+      return updated;
+    });
+  };
+
+  const updateItemPrice = (index: number, price: number) => {
+    setEditableItems((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], price };
+      // 合計金額を自動計算（AIモードの場合のみ自動更新）
+      if (isAIMode) {
+        const newTotal = updated.reduce((sum, item) => sum + item.price, 0);
+        setEditableTotalAmount(newTotal);
+      } else {
+        // 手入力モードの場合、明細モードが開いているときのみ合計を更新
+        if (isDetailsOpen) {
+          const newTotal = updated.reduce((sum, item) => sum + item.price, 0);
+          setTotalAmount(newTotal);
+        }
+      }
+      return updated;
+    });
+  };
+
+  const deleteItem = (index: number) => {
+    setEditableItems((prev) => {
+      const updated = prev.filter((_, i) => i !== index);
+      // 合計金額を自動計算（AIモードの場合のみ自動更新）
+      if (isAIMode) {
+        const newTotal = updated.reduce((sum, item) => sum + item.price, 0);
+        setEditableTotalAmount(newTotal);
+      } else {
+        // 手入力モードの場合、明細モードが開いているときのみ合計を更新
+        if (isDetailsOpen) {
+          const newTotal = updated.reduce((sum, item) => sum + item.price, 0);
+          setTotalAmount(newTotal);
+        }
+      }
+      // 仕分け情報も削除
+      const newAssignments = { ...itemAssignments };
+      delete newAssignments[index];
+      // インデックスを再マッピング
+      const remappedAssignments: Record<number, "self" | "other" | "split"> =
+        {};
+      Object.keys(newAssignments).forEach((key) => {
+        const oldIndex = Number(key);
+        if (oldIndex > index) {
+          remappedAssignments[oldIndex - 1] = newAssignments[oldIndex];
+        } else if (oldIndex < index) {
+          remappedAssignments[oldIndex] = newAssignments[oldIndex];
+        }
+      });
+      setItemAssignments(remappedAssignments);
+      return updated;
+    });
+  };
+
+  const addItem = () => {
+    setEditableItems((prev) => [...prev, { name: "", price: 0 }]);
   };
 
   // カメラ撮影画面
@@ -444,57 +531,54 @@ ${transactionUrl}`;
       </header>
 
       <div className="flex-1 px-4 pb-32">
-        {/* 店名・合計表示 */}
-        {isAIMode && aiResult && (
-          <div className="mb-6 rounded-2xl bg-emerald-50 p-4">
-            <p className="text-sm text-gray-500">店名</p>
-            <p className="mt-1 text-lg font-semibold text-gray-800">
-              {aiResult.store_name || "（店名不明）"}
-            </p>
-            <p className="mt-4 text-sm text-gray-500">合計金額</p>
-            <p className="mt-1 text-2xl font-bold text-emerald-500">
-              ¥{aiResult.total_amount.toLocaleString()}
-            </p>
+        {/* 店名・合計入力フィールド（AIモードと手入力モード共通） */}
+        <div className="mb-6 space-y-4">
+          <div>
+            <label
+              htmlFor="store-name"
+              className="block text-sm font-medium text-gray-800 mb-2"
+            >
+              店名（任意）
+            </label>
+            <input
+              id="store-name"
+              type="text"
+              placeholder="例: サンディ"
+              value={isAIMode ? editableStoreName : storeName}
+              onChange={(e) => {
+                if (isAIMode) {
+                  setEditableStoreName(e.target.value);
+                } else {
+                  setStoreName(e.target.value);
+                }
+              }}
+              className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-gray-800 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+            />
           </div>
-        )}
-
-        {/* 手入力モード：入力フィールド */}
-        {!isAIMode && (
-          <div className="mb-6 space-y-4">
-            <div>
-              <label
-                htmlFor="store-name"
-                className="block text-sm font-medium text-gray-800 mb-2"
-              >
-                店名（任意）
-              </label>
-              <input
-                id="store-name"
-                type="text"
-                placeholder="例: サンディ"
-                value={storeName}
-                onChange={(e) => setStoreName(e.target.value)}
-                className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-gray-800 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="total-amount"
-                className="block text-sm font-medium text-gray-800 mb-2"
-              >
-                合計金額
-              </label>
-              <input
-                id="total-amount"
-                type="number"
-                placeholder="0"
-                value={totalAmount || ""}
-                onChange={(e) => setTotalAmount(Number(e.target.value) || 0)}
-                className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-2xl font-bold text-gray-800 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-              />
-            </div>
+          <div>
+            <label
+              htmlFor="total-amount"
+              className="block text-sm font-medium text-gray-800 mb-2"
+            >
+              合計金額
+            </label>
+            <input
+              id="total-amount"
+              type="number"
+              placeholder="0"
+              value={isAIMode ? editableTotalAmount || "" : totalAmount || ""}
+              onChange={(e) => {
+                const value = Number(e.target.value) || 0;
+                if (isAIMode) {
+                  setEditableTotalAmount(value);
+                } else {
+                  setTotalAmount(value);
+                }
+              }}
+              className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-2xl font-bold text-gray-800 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+            />
           </div>
-        )}
+        </div>
 
         {/* 割り勘スライダー */}
         <div
@@ -564,57 +648,99 @@ ${transactionUrl}`;
           </div>
         </div>
 
-        {/* 明細モード（AIモード時のみ） */}
-        {isAIMode && (
-          <div className="mb-6 rounded-2xl bg-white border border-gray-200 overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setIsDetailsOpen(!isDetailsOpen)}
-              className="w-full px-4 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
-            >
-              <span className="font-medium text-gray-800">
-                明細を個別に仕分け
-              </span>
-              {isDetailsOpen ? (
-                <ChevronUp className="h-5 w-5 text-gray-500" />
-              ) : (
-                <ChevronDown className="h-5 w-5 text-gray-500" />
-              )}
-            </button>
+        {/* 明細モード */}
+        <div className="mb-6 rounded-2xl bg-white border border-gray-200 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setIsDetailsOpen(!isDetailsOpen)}
+            className="w-full px-4 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
+          >
+            <span className="font-medium text-gray-800">
+              明細を個別に仕分け
+            </span>
+            {isDetailsOpen ? (
+              <ChevronUp className="h-5 w-5 text-gray-500" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-gray-500" />
+            )}
+          </button>
 
-            {isDetailsOpen && aiResult && (
-              <div className="border-t border-gray-200 p-4 space-y-3">
-                {aiResult.items.map((item, index) => {
+          {isDetailsOpen && (
+            <div className="border-t border-gray-200 p-4 space-y-3">
+              {editableItems.length > 0 ? (
+                editableItems.map((item, index) => {
                   const assignment = itemAssignments[index] || "split";
                   return (
                     <div
-                      key={`${item.name}-${item.price}-${index}`}
-                      className="flex items-center justify-between p-3 rounded-xl bg-gray-50"
+                      key={`item-${item.name}-${item.price}-${index}`}
+                      className="p-3 rounded-xl bg-gray-50 space-y-2"
                     >
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-800">
-                          {item.name}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          ¥{item.price.toLocaleString()}
-                        </p>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 space-y-2">
+                          <input
+                            type="text"
+                            value={item.name}
+                            onChange={(e) =>
+                              updateItemName(index, e.target.value)
+                            }
+                            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-800 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                            placeholder="商品名"
+                          />
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500">¥</span>
+                            <input
+                              type="number"
+                              value={item.price || ""}
+                              onChange={(e) =>
+                                updateItemPrice(
+                                  index,
+                                  Number(e.target.value) || 0
+                                )
+                              }
+                              className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-xs text-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                              placeholder="0"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => toggleItemAssignment(index)}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap ${getAssignmentColor(
+                              assignment
+                            )}`}
+                          >
+                            {getAssignmentLabel(assignment)}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deleteItem(index)}
+                            className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                            title="削除"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => toggleItemAssignment(index)}
-                        className={`ml-3 px-3 py-1.5 rounded-xl text-xs font-medium ${getAssignmentColor(
-                          assignment
-                        )}`}
-                      >
-                        {getAssignmentLabel(assignment)}
-                      </button>
                     </div>
                   );
-                })}
-              </div>
-            )}
-          </div>
-        )}
+                })
+              ) : (
+                <p className="text-sm text-gray-500 text-center py-4">
+                  明細がありません
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={addItem}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-gray-300 text-gray-500 hover:border-emerald-500 hover:text-emerald-500 transition-colors"
+              >
+                <Plus className="h-4 w-4" />
+                <span className="text-sm font-medium">商品を追加</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 確定ボタン（Bottom Fixed） */}
@@ -622,7 +748,10 @@ ${transactionUrl}`;
         <button
           type="button"
           onClick={handleSendLine}
-          disabled={isSubmitting || (!isAIMode && totalAmount <= 0)}
+          disabled={
+            isSubmitting ||
+            (isAIMode ? editableTotalAmount <= 0 : totalAmount <= 0)
+          }
           className="flex h-16 w-full items-center justify-center gap-2 rounded-3xl bg-emerald-500 text-white shadow-md transition-colors hover:bg-emerald-600 active:bg-emerald-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
         >
           {isSubmitting ? (
