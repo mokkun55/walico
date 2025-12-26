@@ -341,6 +341,7 @@ ${transactionUrl}`;
             <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-red-700 text-sm">{analysisError}</p>
               <button
+                type="button"
                 onClick={() => router.push("/input?mode=ai&step=camera")}
                 className="mt-2 text-red-600 text-sm underline"
               >
