@@ -94,12 +94,44 @@ function InputPageContent() {
         ? calculateDetailedAmount()
         : requestAmount;
 
+      // 画像をR2にアップロード（AIモードで画像がある場合）
+      let receiptImageUrl: string | null = null;
+      if (isAIMode && capturedImage) {
+        try {
+          // Base64画像をBlobに変換
+          const response = await fetch(capturedImage);
+          const blob = await response.blob();
+
+          // FormDataを作成
+          const uploadFormData = new FormData();
+          uploadFormData.append("image", blob, "receipt.jpg");
+
+          // R2にアップロード
+          const uploadResponse = await fetch("/api/upload", {
+            method: "POST",
+            body: uploadFormData,
+          });
+
+          if (!uploadResponse.ok) {
+            const errorData = await uploadResponse.json();
+            throw new Error(errorData.error || "画像のアップロードに失敗しました");
+          }
+
+          const uploadData = await uploadResponse.json();
+          receiptImageUrl = uploadData.url;
+        } catch (error) {
+          console.error("Error uploading image:", error);
+          // 画像アップロードに失敗してもトランザクション作成は続行
+          // ユーザーには警告を表示しない（画像なしでも動作するため）
+        }
+      }
+
       // APIに送信するデータを準備
       const payload = {
         store_name: isAIMode ? aiResult?.store_name || null : storeName || null,
         total_amount: isAIMode ? aiResult?.total_amount || 0 : totalAmount,
         request_amount: calculatedRequestAmount,
-        receipt_image_url: null, // TODO: Phase 3で実装
+        receipt_image_url: receiptImageUrl,
         items_json:
           isAIMode && aiResult?.items
             ? aiResult.items.map((item, index) => {
