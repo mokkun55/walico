@@ -38,7 +38,7 @@ function InputPageContent() {
   const [itemAssignments, setItemAssignments] = useState<
     Record<number, "self" | "other" | "split">
   >({});
-  
+
   // 手入力モードの状態管理
   const [storeName, setStoreName] = useState("");
   const [totalAmount, setTotalAmount] = useState(0);
@@ -53,7 +53,7 @@ function InputPageContent() {
   // カメラ撮影処理
   const handleCapture = () => {
     if (!webcamRef.current) return;
-    
+
     const imageSrc = webcamRef.current.getScreenshot();
     if (imageSrc) {
       setCapturedImage(imageSrc);
@@ -85,33 +85,34 @@ function InputPageContent() {
   // LINE送信処理
   const handleSendLine = async () => {
     if (isSubmitting) return;
-    
+
     setIsSubmitting(true);
-    
+
     try {
       // 計算された請求額
       const calculatedRequestAmount = isDetailsOpen
         ? calculateDetailedAmount()
         : requestAmount;
-      
+
       // APIに送信するデータを準備
       const payload = {
-        store_name: isAIMode ? (aiResult?.store_name || null) : (storeName || null),
-        total_amount: isAIMode ? (aiResult?.total_amount || 0) : totalAmount,
+        store_name: isAIMode ? aiResult?.store_name || null : storeName || null,
+        total_amount: isAIMode ? aiResult?.total_amount || 0 : totalAmount,
         request_amount: calculatedRequestAmount,
         receipt_image_url: null, // TODO: Phase 3で実装
-        items_json: isAIMode && aiResult?.items
-          ? aiResult.items.map((item, index) => {
-              const assignment = itemAssignments[index] || "split";
-              return {
-                name: item.name,
-                price: item.price,
-                assignment, // 仕分け情報も保存（オプション）
-              };
-            })
-          : null,
+        items_json:
+          isAIMode && aiResult?.items
+            ? aiResult.items.map((item, index) => {
+                const assignment = itemAssignments[index] || "split";
+                return {
+                  name: item.name,
+                  price: item.price,
+                  assignment, // 仕分け情報も保存（オプション）
+                };
+              })
+            : null,
       };
-      
+
       // APIを呼び出してトランザクションを作成
       const response = await fetch("/api/transactions", {
         method: "POST",
@@ -120,23 +121,34 @@ function InputPageContent() {
         },
         body: JSON.stringify(payload),
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || "トランザクションの作成に失敗しました");
       }
-      
+
       const data = await response.json();
       const transactionUrl = `${window.location.origin}${data.url}`;
-      
+
       // LINEアプリを起動（URLスキーム）
       const storeNameText = payload.store_name || "店";
-      const lineMessage = `${storeNameText}の代金 ¥${calculatedRequestAmount.toLocaleString()} お願い！ レシート詳細: ${transactionUrl}`;
-      const lineUrl = `https://line.me/R/share?text=${encodeURIComponent(lineMessage)}`;
-      
+      const lineMessage = `ワリコだよ👛
+${storeNameText} の分を計算したよ！
+
+今回の金額は
+✨ 【 ${calculatedRequestAmount.toLocaleString()} 円 】 ✨ です。
+
+詳しい内訳やレシート画像は、下のリンクから見れるよ👀
+支払いが終わったら、リンク先の「完了」ボタンを押してね👇
+
+${transactionUrl}`;
+      const lineUrl = `https://line.me/R/share?text=${encodeURIComponent(
+        lineMessage
+      )}`;
+
       // LINEアプリを開く
       window.location.href = lineUrl;
-      
+
       // 送信完了画面に遷移
       router.push("/input?mode=ai&step=complete");
     } catch (error) {
@@ -175,7 +187,7 @@ function InputPageContent() {
 
           const result: AIResult = await analyzeResponse.json();
           setAiResult(result);
-          
+
           // 解析結果画面に遷移
           router.push("/input?mode=ai&step=result");
         } catch (error) {
@@ -198,7 +210,9 @@ function InputPageContent() {
     : totalAmount;
 
   // 割り勘計算
-  const requestAmount = Math.round((currentTotalAmount * (100 - splitRatio)) / 100);
+  const requestAmount = Math.round(
+    (currentTotalAmount * (100 - splitRatio)) / 100
+  );
 
   // 明細モードでの計算（簡易版）
   const calculateDetailedAmount = () => {
@@ -481,10 +495,12 @@ function InputPageContent() {
             {isDetailsOpen ? (
               <>
                 <span className="text-gray-400">
-                  自分: ¥{Math.round((currentTotalAmount * 50) / 100).toLocaleString()}
+                  自分: ¥
+                  {Math.round((currentTotalAmount * 50) / 100).toLocaleString()}
                 </span>
                 <span className="text-gray-400">
-                  相手: ¥{Math.round((currentTotalAmount * 50) / 100).toLocaleString()}
+                  相手: ¥
+                  {Math.round((currentTotalAmount * 50) / 100).toLocaleString()}
                 </span>
               </>
             ) : (
