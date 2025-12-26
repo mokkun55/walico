@@ -1,4 +1,3 @@
-/* biome-ignore lint: 外部URLの画像表示には通常のimgタグが必要 */
 "use client";
 
 import { ArrowLeft, Loader2, X } from "lucide-react";

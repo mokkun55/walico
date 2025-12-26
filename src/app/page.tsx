@@ -2,7 +2,7 @@
 
 import { Camera, Check, Clock, Keyboard, RotateCcw } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type TransactionHistory = {
   id: string;
@@ -17,16 +17,7 @@ export default function Home() {
   const [history, setHistory] = useState<TransactionHistory[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
-  useEffect(() => {
-    // LocalStorageから未完了のデータをチェック
-    const draft = localStorage.getItem("walico-draft");
-    setHasDraft(!!draft);
-
-    // 履歴を読み込む
-    loadHistory();
-  }, []);
-
-  const loadHistory = async () => {
+  const loadHistory = useCallback(async () => {
     setIsLoadingHistory(true);
     try {
       const savedIds = JSON.parse(
@@ -87,7 +78,16 @@ export default function Home() {
     } finally {
       setIsLoadingHistory(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // LocalStorageから未完了のデータをチェック
+    const draft = localStorage.getItem("walico-draft");
+    setHasDraft(!!draft);
+
+    // 履歴を読み込む
+    loadHistory();
+  }, [loadHistory]);
 
   const handleResume = () => {
     // 前回の続きから再開（将来的に実装）

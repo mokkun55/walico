@@ -90,7 +90,7 @@ export default function ReceiverPage() {
         }
       }
 
-      const data = await response.json();
+      await response.json();
 
       // トランザクション状態を更新
       if (transaction) {

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Camera, Keyboard, Share2, Check, ChevronDown, ChevronUp, RefreshCw, X, Receipt, Wallet, ArrowRight } from 'lucide-react';
+import { useState } from 'react';
+import { Camera, Keyboard, Share2, Check, ChevronDown, ChevronUp, X, Receipt, Wallet, ArrowRight } from 'lucide-react';
 
 /**
  * WALICO PROTOYPE
@@ -14,7 +14,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
 
   // --- STATE FOR EDIT SCREEN ---
-  const [totalAmount, setTotalAmount] = useState(8600);
+  const [totalAmount] = useState(8600);
   const [ratio, setRatio] = useState(50); // 50%
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
@@ -47,7 +47,7 @@ export default function App() {
     <div className="flex flex-col h-screen bg-white relative overflow-hidden">
       {/* Settings / Menu Icon */}
       <div className="absolute top-0 right-0 p-6 z-10">
-        <button className="p-2 text-gray-400 hover:text-emerald-500 transition-colors">
+        <button type="button" className="p-2 text-gray-400 hover:text-emerald-500 transition-colors">
           <div className="w-6 h-6 border-2 border-current rounded-full border-dashed animate-spin-slow" />
         </button>
       </div>
@@ -73,6 +73,7 @@ export default function App() {
       {/* Action Dock (Floating) */}
       <div className="p-6 pb-10 w-full max-w-md mx-auto relative z-20">
         <button 
+          type="button"
           onClick={startScan}
           className="group w-full h-20 bg-emerald-500 hover:bg-emerald-600 active:scale-95 transition-all duration-200 rounded-[2rem] shadow-xl shadow-emerald-200 flex items-center justify-between px-8 relative overflow-hidden"
         >
@@ -89,6 +90,7 @@ export default function App() {
         </button>
 
         <button 
+          type="button"
           onClick={() => setView('EDIT')}
           className="w-full mt-6 text-center text-gray-400 text-sm font-medium hover:text-emerald-500 transition-colors flex items-center justify-center gap-2"
         >
@@ -102,6 +104,7 @@ export default function App() {
   // 2. スキャン画面 (Loading)
   const ScanningScreen = () => (
     <div className="h-screen bg-gray-900 flex flex-col items-center justify-center relative">
+      {/* biome-ignore lint/performance/noImgElement: サンプルコードのため通常のimgタグを使用 */}
       <img 
         src="https://images.unsplash.com/photo-1559144490-8d2495406080?auto=format&fit=crop&q=80&w=800" 
         className="absolute inset-0 w-full h-full object-cover opacity-40 blur-sm"
@@ -131,7 +134,7 @@ export default function App() {
             />
             <p className="text-gray-400 text-xs">2024.12.26 19:30</p>
           </div>
-          <button onClick={() => setView('HOME')} className="p-2 -mr-2 text-gray-400">
+          <button type="button" onClick={() => setView('HOME')} className="p-2 -mr-2 text-gray-400">
             <X size={24} />
           </button>
         </div>
@@ -168,14 +171,15 @@ export default function App() {
             className="w-full h-3 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-emerald-500 hover:accent-emerald-600"
           />
           <div className="flex justify-between mt-4">
-             <button onClick={() => setRatio(50)} className="px-3 py-1 rounded-full bg-gray-100 text-xs font-bold text-gray-500 hover:bg-gray-200">50:50</button>
-             <button className="px-3 py-1 rounded-full bg-emerald-50 text-xs font-bold text-emerald-600 hover:bg-emerald-100">端数切上</button>
+             <button type="button" onClick={() => setRatio(50)} className="px-3 py-1 rounded-full bg-gray-100 text-xs font-bold text-gray-500 hover:bg-gray-200">50:50</button>
+             <button type="button" className="px-3 py-1 rounded-full bg-emerald-50 text-xs font-bold text-emerald-600 hover:bg-emerald-100">端数切上</button>
           </div>
         </div>
 
         {/* Detail Accordion */}
         <div className="mx-4">
           <button 
+            type="button"
             onClick={() => setIsDetailOpen(!isDetailOpen)}
             className="w-full flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 shadow-sm text-gray-600 font-bold text-sm"
           >
@@ -195,16 +199,16 @@ export default function App() {
                 { name: "石焼ビビンバ", price: 980 },
                 { name: "チョレギサラダ", price: 840 },
                 { name: "ウーロン茶", price: 400 },
-              ].map((item, i) => (
-                <div key={i} className="flex justify-between items-center p-4 border-b border-gray-50 last:border-0">
+              ].map((item) => (
+                <div key={`${item.name}-${item.price}`} className="flex justify-between items-center p-4 border-b border-gray-50 last:border-0">
                   <div>
                     <p className="text-sm font-bold text-gray-700">{item.name}</p>
                     <p className="text-xs text-gray-400">¥{item.price.toLocaleString()}</p>
                   </div>
                   <div className="flex bg-gray-100 rounded-lg p-1">
-                    <button className="px-3 py-1 text-xs font-bold rounded-md bg-white shadow-sm text-emerald-600">割</button>
-                    <button className="px-3 py-1 text-xs font-bold rounded-md text-gray-400">自</button>
-                    <button className="px-3 py-1 text-xs font-bold rounded-md text-gray-400">相</button>
+                    <button type="button" className="px-3 py-1 text-xs font-bold rounded-md bg-white shadow-sm text-emerald-600">割</button>
+                    <button type="button" className="px-3 py-1 text-xs font-bold rounded-md text-gray-400">自</button>
+                    <button type="button" className="px-3 py-1 text-xs font-bold rounded-md text-gray-400">相</button>
                   </div>
                 </div>
               ))}
@@ -216,6 +220,7 @@ export default function App() {
       {/* Footer Action */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-gray-100">
         <button 
+          type="button"
           onClick={sendLine}
           disabled={loading}
           className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-lg py-4 rounded-2xl shadow-lg shadow-emerald-100 flex items-center justify-center gap-2 active:scale-95 transition-all"
@@ -244,12 +249,14 @@ export default function App() {
       
       <div className="space-y-4 w-full max-w-xs">
         <button 
+          type="button"
           onClick={() => setView('RECEIVER')}
           className="w-full py-3 bg-white/20 hover:bg-white/30 rounded-xl font-bold border border-white/40"
         >
           [デモ] 相手の画面を見る
         </button>
         <button 
+          type="button"
           onClick={() => setView('HOME')}
           className="w-full py-3 text-emerald-100 hover:text-white font-bold text-sm"
         >
@@ -288,7 +295,7 @@ export default function App() {
          </div>
 
          {/* Receipt Image Button */}
-         <button className="w-full bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between group hover:border-emerald-200 transition-colors">
+         <button type="button" className="w-full bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between group hover:border-emerald-200 transition-colors">
             <div className="flex items-center gap-3">
               <div className="bg-gray-100 p-2 rounded-lg text-gray-500">
                 <Receipt size={20} />
@@ -326,6 +333,7 @@ export default function App() {
        <div className="p-4 bg-white border-t border-gray-100">
          {!isPaid ? (
            <button 
+             type="button"
              onClick={() => setIsPaid(true)}
              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-lg py-4 rounded-2xl shadow-lg shadow-emerald-200 active:scale-95 transition-all flex items-center justify-center gap-2"
            >
@@ -334,6 +342,7 @@ export default function App() {
            </button>
          ) : (
            <button 
+             type="button"
              disabled
              className="w-full bg-gray-100 text-gray-400 font-bold text-lg py-4 rounded-2xl flex items-center justify-center gap-2 cursor-not-allowed"
            >
@@ -343,7 +352,7 @@ export default function App() {
          )}
          {/* PayPay Link Mock */}
          <div className="mt-4 text-center">
-            <button className="text-xs text-gray-400 underline font-medium hover:text-emerald-500">
+            <button type="button" className="text-xs text-gray-400 underline font-medium hover:text-emerald-500">
                PayPayアプリを開く
             </button>
          </div>

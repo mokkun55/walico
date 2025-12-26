@@ -84,7 +84,6 @@ async function main() {
     config,
     contents,
   });
-  let fileIndex = 0;
   for await (const chunk of response) {
     console.log(chunk.text);
   }

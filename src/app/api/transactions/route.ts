@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { db } from "@/libs/db";
 import { transactions } from "@/libs/db/schema";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 
 const EXPIRES_DAYS = 7;
 

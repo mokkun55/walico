@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 
 // Cloudflare R2設定
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
@@ -10,19 +10,36 @@ const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME;
 const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL;
 
 // S3クライアントの初期化（R2はS3互換API）
-const s3Client = new S3Client({
-  region: "auto",
-  endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: R2_ACCESS_KEY_ID!,
-    secretAccessKey: R2_SECRET_ACCESS_KEY!,
-  },
-});
+// 環境変数チェックはPOST関数内で行うため、ここでは一時的な初期化
+let s3Client: S3Client | null = null;
+
+function getS3Client(): S3Client {
+  if (!s3Client) {
+    if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
+      throw new Error("R2設定が不完全です。環境変数を確認してください。");
+    }
+    s3Client = new S3Client({
+      region: "auto",
+      endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      credentials: {
+        accessKeyId: R2_ACCESS_KEY_ID,
+        secretAccessKey: R2_SECRET_ACCESS_KEY,
+      },
+    });
+  }
+  return s3Client;
+}
 
 export async function POST(request: NextRequest) {
   try {
     // 環境変数のチェック
-    if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY || !R2_BUCKET_NAME || !R2_PUBLIC_URL) {
+    if (
+      !R2_ACCOUNT_ID ||
+      !R2_ACCESS_KEY_ID ||
+      !R2_SECRET_ACCESS_KEY ||
+      !R2_BUCKET_NAME ||
+      !R2_PUBLIC_URL
+    ) {
       return NextResponse.json(
         { error: "R2設定が不完全です。環境変数を確認してください。" },
         { status: 500 }
@@ -44,7 +61,10 @@ export async function POST(request: NextRequest) {
     const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
     if (!allowedTypes.includes(imageFile.type)) {
       return NextResponse.json(
-        { error: "サポートされていない画像形式です。JPEG、PNG、WebPのみ対応しています。" },
+        {
+          error:
+            "サポートされていない画像形式です。JPEG、PNG、WebPのみ対応しています。",
+        },
         { status: 400 }
       );
     }
@@ -76,9 +96,14 @@ export async function POST(request: NextRequest) {
       // パブリック読み取りを許可（R2のパブリックURL設定に依存）
     });
 
-    await s3Client.send(command);
+    const client = getS3Client();
+    await client.send(command);
 
     // パブリックURLを生成（完全なURLであることを保証）
+    // 環境変数チェック済みのため、ここでは非nullであることが保証されている
+    if (!R2_PUBLIC_URL) {
+      throw new Error("R2_PUBLIC_URL is not set");
+    }
     const baseUrl = R2_PUBLIC_URL.endsWith("/")
       ? R2_PUBLIC_URL.slice(0, -1)
       : R2_PUBLIC_URL;
@@ -86,7 +111,9 @@ export async function POST(request: NextRequest) {
 
     // URLが完全なURL（https://で始まる）であることを確認
     if (!publicUrl.startsWith("http://") && !publicUrl.startsWith("https://")) {
-      throw new Error("R2_PUBLIC_URL must be a complete URL starting with http:// or https://");
+      throw new Error(
+        "R2_PUBLIC_URL must be a complete URL starting with http:// or https://"
+      );
     }
 
     return NextResponse.json({
@@ -104,4 +131,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
