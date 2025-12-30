@@ -22,6 +22,13 @@
       "when": 1767090582424,
       "tag": "0002_deep_amazoness",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1767091660154,
+      "tag": "0003_lumpy_iron_lad",
+      "breakpoints": true
     }
   ]
 }

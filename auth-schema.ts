@@ -1,27 +1,6 @@
 import { relations, sql } from "drizzle-orm";
 import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
 
-export const transactions = sqliteTable(
-  "transactions",
-  {
-    id: text("id").primaryKey(), // UUID
-    storeName: text("store_name"),
-    totalAmount: integer("total_amount").notNull(),
-    requestAmount: integer("request_amount").notNull(),
-    receiptImageUrl: text("receipt_image_url"),
-    itemsJson: text("items_json"), // JSON文字列として保存
-    status: text("status", { enum: ["pending", "paid"] })
-      .notNull()
-      .default("pending"),
-    createdAt: integer("created_at").notNull(), // Unix timestamp (秒)
-    expiresAt: integer("expires_at").notNull(), // Unix timestamp (秒)
-  },
-  (t) => [
-    index("idx_transactions_created_at").on(t.createdAt),
-    index("idx_transactions_expires_at").on(t.expiresAt),
-  ]
-);
-
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
@@ -57,7 +36,7 @@ export const sessions = sqliteTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
   },
-  (table) => [index("sessions_userId_idx").on(table.userId)]
+  (table) => [index("sessions_userId_idx").on(table.userId)],
 );
 
 export const accounts = sqliteTable(
@@ -87,7 +66,7 @@ export const accounts = sqliteTable(
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },
-  (table) => [index("accounts_userId_idx").on(table.userId)]
+  (table) => [index("accounts_userId_idx").on(table.userId)],
 );
 
 export const verifications = sqliteTable(
@@ -105,7 +84,7 @@ export const verifications = sqliteTable(
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },
-  (table) => [index("verifications_identifier_idx").on(table.identifier)]
+  (table) => [index("verifications_identifier_idx").on(table.identifier)],
 );
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -126,7 +105,3 @@ export const accountsRelations = relations(accounts, ({ one }) => ({
     references: [users.id],
   }),
 }));
-
-// 型エクスポート
-export type Transaction = typeof transactions.$inferSelect;
-export type NewTransaction = typeof transactions.$inferInsert;
