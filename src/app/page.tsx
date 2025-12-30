@@ -144,9 +144,9 @@ export default function Home() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-white pb-40">
+    <div className="flex h-screen flex-col bg-white overflow-hidden">
       {/* アプリ名 */}
-      <div className="px-4 pt-12 pb-6">
+      <div className="px-4 pt-12 pb-6 shrink-0">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Walico</h1>
@@ -187,7 +187,7 @@ export default function Home() {
 
       {/* ダッシュボードへの導線（ログイン済みの場合のみ） */}
       {!isCheckingSession && isLoggedIn && (
-        <div className="px-4 pb-4">
+        <div className="px-4 pb-4 shrink-0">
           <Link
             href="/dashboard"
             className="flex items-center justify-between rounded-2xl border-2 border-emerald-200 bg-emerald-50 px-4 py-3 transition-colors hover:bg-emerald-100 active:bg-emerald-100"
@@ -225,65 +225,9 @@ export default function Home() {
         </div>
       )}
 
-      {/* 履歴セクション */}
-      <div className="px-4 pb-4">
-        <h2 className="mb-3 text-sm font-semibold text-gray-500">履歴</h2>
-        {isLoadingHistory ? (
-          <div className="text-center py-4 text-gray-400 text-sm">
-            読み込み中...
-          </div>
-        ) : history.length > 0 ? (
-          <div className="space-y-2 max-h-64 overflow-y-auto">
-            {history.map((item) => (
-              <Link
-                key={item.id}
-                href={`/r/${item.id}`}
-                className="block rounded-2xl border border-gray-200 bg-white p-4 transition-colors hover:bg-gray-50 active:bg-gray-100"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      {item.status === "paid" ? (
-                        <Check className="h-4 w-4 shrink-0 text-emerald-500" />
-                      ) : (
-                        <Clock className="h-4 w-4 shrink-0 text-amber-500" />
-                      )}
-                      <span
-                        className={`text-xs font-medium ${
-                          item.status === "paid"
-                            ? "text-emerald-600"
-                            : "text-amber-600"
-                        }`}
-                      >
-                        {item.status === "paid" ? "完了" : "未完了"}
-                      </span>
-                    </div>
-                    <p className="text-sm font-medium text-gray-800 truncate">
-                      {item.store_name || "（店名不明）"}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {formatDate(item.created_at)}
-                    </p>
-                  </div>
-                  <div className="ml-4 text-right">
-                    <p className="text-lg font-bold text-gray-800">
-                      ¥{item.request_amount.toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-4 text-gray-400 text-sm">
-            履歴がありません
-          </div>
-        )}
-      </div>
-
       {/* 前回の続きから再開（未完了データがある場合のみ表示） */}
       {hasDraft && (
-        <div className="px-4 pb-4 mb-24">
+        <div className="px-4 pb-4 shrink-0">
           <button
             type="button"
             onClick={handleResume}
@@ -297,8 +241,66 @@ export default function Home() {
         </div>
       )}
 
-      {/* Action Area (Bottom Fixed) */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-6 shadow-lg">
+      {/* 履歴セクション */}
+      <div className="flex-1 px-4 min-h-0 flex flex-col">
+        <h2 className="mb-3 text-sm font-semibold text-gray-500 shrink-0">履歴</h2>
+        <div className="flex-1 overflow-y-auto min-h-0">
+          {isLoadingHistory ? (
+            <div className="text-center py-4 text-gray-400 text-sm">
+              読み込み中...
+            </div>
+          ) : history.length > 0 ? (
+            <div className="space-y-2 pb-4">
+              {history.map((item) => (
+                <Link
+                  key={item.id}
+                  href={`/r/${item.id}`}
+                  className="block rounded-2xl border border-gray-200 bg-white p-4 transition-colors hover:bg-gray-50 active:bg-gray-100"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        {item.status === "paid" ? (
+                          <Check className="h-4 w-4 shrink-0 text-emerald-500" />
+                        ) : (
+                          <Clock className="h-4 w-4 shrink-0 text-amber-500" />
+                        )}
+                        <span
+                          className={`text-xs font-medium ${
+                            item.status === "paid"
+                              ? "text-emerald-600"
+                              : "text-amber-600"
+                          }`}
+                        >
+                          {item.status === "paid" ? "完了" : "未完了"}
+                        </span>
+                      </div>
+                      <p className="text-sm font-medium text-gray-800 truncate">
+                        {item.store_name || "（店名不明）"}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {formatDate(item.created_at)}
+                      </p>
+                    </div>
+                    <div className="ml-4 text-right">
+                      <p className="text-lg font-bold text-gray-800">
+                        ¥{item.request_amount.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-4 text-gray-400 text-sm">
+              履歴がありません
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Action Area */}
+      <div className="bg-white border-t border-gray-200 p-6 shadow-lg shrink-0">
         {/* Primary: レシート撮影 */}
         <Link
           href="/input?mode=ai&step=camera"

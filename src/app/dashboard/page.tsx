@@ -42,9 +42,9 @@ export default function DashboardPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"sent" | "received">("sent");
   const [sentTransactions, setSentTransactions] = useState<Transaction[]>([]);
-  const [receivedTransactions, setReceivedTransactions] = useState<Transaction[]>(
-    []
-  );
+  const [receivedTransactions, setReceivedTransactions] = useState<
+    Transaction[]
+  >([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [userImage, setUserImage] = useState<string | null>(null);
@@ -123,9 +123,9 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
+    <div className="flex h-screen flex-col bg-gray-50 overflow-hidden">
       {/* ヘッダー */}
-      <div className="bg-white border-b border-gray-200 px-4 py-4">
+      <div className="bg-white border-b border-gray-200 px-4 py-4 shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
@@ -135,10 +135,10 @@ export default function DashboardPage() {
               <ArrowLeft className="h-6 w-6 text-gray-600" />
             </Link>
             <div>
-              <h1 className="text-xl font-bold text-gray-800">ダッシュボード</h1>
-              {userName && (
-                <p className="text-xs text-gray-500">{userName}</p>
-              )}
+              <h1 className="text-xl font-bold text-gray-800">
+                ダッシュボード
+              </h1>
+              {userName && <p className="text-xs text-gray-500">{userName}</p>}
             </div>
           </div>
           <Link
@@ -152,25 +152,31 @@ export default function DashboardPage() {
 
       {/* サマリーセクション */}
       {summary && (
-        <div className="px-4 py-6 space-y-4">
+        <div className="px-4 py-6 space-y-4 shrink-0">
           {/* 送った請求 */}
           <div className="bg-white rounded-2xl p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp className="h-5 w-5 text-emerald-500" />
-              <h2 className="text-lg font-semibold text-gray-800">送った請求</h2>
+              <h2 className="text-lg font-semibold text-gray-800">
+                送った請求
+              </h2>
             </div>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-500">未完了</span>
-                <span className="text-lg font-bold text-amber-600">
-                  ¥{summary.sent.pending.toLocaleString()}
-                </span>
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500">未完了</span>
+                  <span className="text-lg font-bold text-amber-600">
+                    ¥{summary.sent.pending.toLocaleString()}
+                  </span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-500">完了</span>
-                <span className="text-lg font-bold text-emerald-600">
-                  ¥{summary.sent.paid.toLocaleString()}
-                </span>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500">完了</span>
+                  <span className="text-lg font-bold text-emerald-600">
+                    ¥{summary.sent.paid.toLocaleString()}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -179,20 +185,26 @@ export default function DashboardPage() {
           <div className="bg-white rounded-2xl p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
               <User className="h-5 w-5 text-blue-500" />
-              <h2 className="text-lg font-semibold text-gray-800">受け取った請求</h2>
+              <h2 className="text-lg font-semibold text-gray-800">
+                受け取った請求
+              </h2>
             </div>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-500">未払い</span>
-                <span className="text-lg font-bold text-amber-600">
-                  ¥{summary.received.pending.toLocaleString()}
-                </span>
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 ">
+                  <span className="text-sm text-gray-500">未払い</span>
+                  <span className="text-lg font-bold text-amber-600">
+                    ¥{summary.received.pending.toLocaleString()}
+                  </span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-500">支払済み</span>
-                <span className="text-lg font-bold text-emerald-600">
-                  ¥{summary.received.paid.toLocaleString()}
-                </span>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500">支払済み</span>
+                  <span className="text-lg font-bold text-emerald-600">
+                    ¥{summary.received.paid.toLocaleString()}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -200,7 +212,7 @@ export default function DashboardPage() {
       )}
 
       {/* タブ */}
-      <div className="px-4 pb-4">
+      <div className="px-4 pb-4 shrink-0">
         <div className="flex gap-2 bg-white rounded-2xl p-1 shadow-sm">
           <button
             type="button"
@@ -228,7 +240,7 @@ export default function DashboardPage() {
       </div>
 
       {/* トランザクション一覧 */}
-      <div className="flex-1 px-4 pb-6 space-y-2 overflow-y-auto">
+      <div className="flex-1 px-4 pb-6 space-y-2 overflow-y-auto min-h-0">
         {activeTab === "sent" ? (
           sentTransactions.length > 0 ? (
             sentTransactions.map((tx) => (
@@ -329,4 +341,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
