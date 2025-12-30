@@ -224,23 +224,25 @@ export default function ReceiverPage() {
         )}
 
         {/* Receipt Image Button */}
-        <Link
-          href={`/r/${id}/receipt`}
-          className="group flex w-full items-center justify-between rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-colors hover:border-emerald-200"
-        >
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-gray-100 p-2 text-gray-500">
-              <Receipt className="h-5 w-5" />
+        {transaction.receipt_image_url && (
+          <Link
+            href={`/r/${id}/receipt`}
+            className="group flex w-full items-center justify-between rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-colors hover:border-emerald-200"
+          >
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-gray-100 p-2 text-gray-500">
+                <Receipt className="h-5 w-5" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-bold text-gray-700">レシート画像</p>
+                <p className="text-xs text-gray-400">
+                  有効期限: あと{getDaysUntilExpiry(transaction.expires_at)}日
+                </p>
+              </div>
             </div>
-            <div className="text-left">
-              <p className="text-sm font-bold text-gray-700">レシート画像</p>
-              <p className="text-xs text-gray-400">
-                有効期限: あと{getDaysUntilExpiry(transaction.expires_at)}日
-              </p>
-            </div>
-          </div>
-          <ArrowRight className="h-4 w-4 text-gray-300 transition-colors group-hover:text-emerald-500" />
-        </Link>
+            <ArrowRight className="h-4 w-4 text-gray-300 transition-colors group-hover:text-emerald-500" />
+          </Link>
+        )}
 
         {/* Breakdown */}
         <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
