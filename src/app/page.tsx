@@ -32,59 +32,81 @@ export default function Home() {
   const loadHistory = useCallback(async () => {
     setIsLoadingHistory(true);
     try {
-      const savedIds = JSON.parse(
-        localStorage.getItem("walico-transaction-ids") || "[]"
-      );
+      // セッションを確認
+      const { data: session } = await authClient.getSession();
 
-      if (savedIds.length === 0) {
-        setHistory([]);
-        return;
-      }
-
-      // 各トランザクションの情報を取得
-      const historyPromises = savedIds.map(async (id: string) => {
+      if (session?.user) {
+        // ログイン済みユーザーの場合：DBから直接取得
         try {
-          const response = await fetch(`/api/transactions/${id}`);
+          const response = await fetch("/api/transactions/sent");
           if (!response.ok) {
-            // 404や410の場合は履歴から削除
-            if (response.status === 404 || response.status === 410) {
-              return null;
-            }
-            throw new Error("Failed to fetch transaction");
+            throw new Error("Failed to fetch transactions");
           }
           const data = await response.json();
-          return {
-            id: data.id,
-            store_name: data.store_name,
-            request_amount: data.request_amount,
-            status: data.status,
-            created_at: data.created_at,
-          };
+          setHistory(data.transactions || []);
         } catch (error) {
-          console.error(`Error fetching transaction ${id}:`, error);
-          return null;
+          console.error("Error loading history from DB:", error);
+          setHistory([]);
         }
-      });
+      } else {
+        // 未ログインの場合：localStorageから取得（後方互換性のため）
+        const savedIds = JSON.parse(
+          localStorage.getItem("walico-transaction-ids") || "[]"
+        );
 
-      const results = await Promise.all(historyPromises);
-      const validHistory = results.filter(
-        (item): item is TransactionHistory => item !== null
-      );
+        if (savedIds.length === 0) {
+          setHistory([]);
+          return;
+        }
 
-      // 作成日時の降順でソート
-      validHistory.sort((a, b) => b.created_at - a.created_at);
+        // 各トランザクションの情報を取得
+        const historyPromises = savedIds.map(async (id: string) => {
+          try {
+            const response = await fetch(`/api/transactions/${id}`);
+            if (!response.ok) {
+              // 404や410の場合は履歴から削除
+              if (response.status === 404 || response.status === 410) {
+                return null;
+              }
+              throw new Error("Failed to fetch transaction");
+            }
+            const data = await response.json();
+            return {
+              id: data.id,
+              store_name: data.store_name,
+              request_amount: data.request_amount,
+              status: data.status,
+              created_at: data.created_at,
+            };
+          } catch (error) {
+            console.error(`Error fetching transaction ${id}:`, error);
+            return null;
+          }
+        });
 
-      setHistory(validHistory);
+        const results = await Promise.all(historyPromises);
+        const validHistory = results.filter(
+          (item): item is TransactionHistory => item !== null
+        );
 
-      // 無効なIDをlocalStorageから削除
-      const validIds = validHistory.map((item) => item.id);
-      const updatedIds = savedIds.filter((id: string) => validIds.includes(id));
-      localStorage.setItem(
-        "walico-transaction-ids",
-        JSON.stringify(updatedIds)
-      );
+        // 作成日時の降順でソート
+        validHistory.sort((a, b) => b.created_at - a.created_at);
+
+        setHistory(validHistory);
+
+        // 無効なIDをlocalStorageから削除
+        const validIds = validHistory.map((item) => item.id);
+        const updatedIds = savedIds.filter((id: string) =>
+          validIds.includes(id)
+        );
+        localStorage.setItem(
+          "walico-transaction-ids",
+          JSON.stringify(updatedIds)
+        );
+      }
     } catch (error) {
       console.error("Error loading history:", error);
+      setHistory([]);
     } finally {
       setIsLoadingHistory(false);
     }
@@ -243,7 +265,9 @@ export default function Home() {
 
       {/* 履歴セクション */}
       <div className="flex-1 px-4 min-h-0 flex flex-col">
-        <h2 className="mb-3 text-sm font-semibold text-gray-500 shrink-0">履歴</h2>
+        <h2 className="mb-3 text-sm font-semibold text-gray-500 shrink-0">
+          履歴
+        </h2>
         <div className="flex-1 overflow-y-auto min-h-0">
           {isLoadingHistory ? (
             <div className="text-center py-4 text-gray-400 text-sm">
