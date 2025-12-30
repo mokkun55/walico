@@ -1,6 +1,14 @@
 "use client";
 
-import { ArrowRight, Check, Loader2, Receipt, Wallet } from "lucide-react";
+import { authClient } from "@/libs/auth-client";
+import {
+  ArrowRight,
+  Check,
+  Loader2,
+  Receipt,
+  Wallet,
+  Sparkles,
+} from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -26,6 +34,25 @@ export default function ReceiverPage() {
   const [error, setError] = useState<string | null>(null);
   const [isPaid, setIsPaid] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+
+  // セッションをチェック
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const { data: session } = await authClient.getSession();
+        setIsLoggedIn(!!session);
+      } catch (error) {
+        console.error("Error checking session:", error);
+        setIsLoggedIn(false);
+      } finally {
+        setIsCheckingSession(false);
+      }
+    };
+
+    checkSession();
+  }, []);
 
   // トランザクションを取得
   useEffect(() => {
@@ -79,7 +106,7 @@ export default function ReceiverPage() {
         if (response.status === 400) {
           const error = await response.json();
           throw new Error(
-            error.error || "既に支払い済みか、無効なリクエストです",
+            error.error || "既に支払い済みか、無効なリクエストです"
           );
         } else if (response.status === 404) {
           throw new Error("トランザクションが見つかりません");
@@ -170,6 +197,32 @@ export default function ReceiverPage() {
 
       {/* Content */}
       <div className="flex-1 space-y-4 overflow-y-auto p-6">
+        {/* ログイン促進メッセージ（ログインしていない場合のみ表示） */}
+        {!isCheckingSession && !isLoggedIn && (
+          <Link
+            href={`/login?callback=${encodeURIComponent(`/r/${id}`)}`}
+            className="block rounded-2xl border-2 border-emerald-200 bg-emerald-50 p-4 transition-colors hover:bg-emerald-100 active:bg-emerald-100"
+          >
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-emerald-500 p-2">
+                <Sparkles className="h-5 w-5 text-white" />
+              </div>
+              <div className="flex-1 text-left">
+                <p className="text-sm font-bold text-emerald-700">
+                  ログインすると便利になります
+                </p>
+                <p className="text-xs text-emerald-600 mt-1">
+                  受け取った請求を一覧で確認できます
+                </p>
+              </div>
+              <div className="flex items-center gap-1 text-emerald-600">
+                <span className="text-xs font-medium">ログイン</span>
+                <ArrowRight className="h-4 w-4" />
+              </div>
+            </div>
+          </Link>
+        )}
+
         {/* Receipt Image Button */}
         <Link
           href={`/r/${id}/receipt`}
@@ -204,7 +257,7 @@ export default function ReceiverPage() {
               <span className="font-medium">
                 {calculateRatio(
                   transaction.total_amount,
-                  transaction.request_amount,
+                  transaction.request_amount
                 )}
                 % (あなた)
               </span>

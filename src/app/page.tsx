@@ -1,6 +1,15 @@
 "use client";
 
-import { Camera, Check, Clock, Keyboard, RotateCcw } from "lucide-react";
+import { authClient } from "@/libs/auth-client";
+import {
+  Camera,
+  Check,
+  Clock,
+  Keyboard,
+  RotateCcw,
+  User,
+  LayoutDashboard,
+} from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
@@ -16,12 +25,15 @@ export default function Home() {
   const [hasDraft, setHasDraft] = useState(false);
   const [history, setHistory] = useState<TransactionHistory[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [userImage, setUserImage] = useState<string | null>(null);
 
   const loadHistory = useCallback(async () => {
     setIsLoadingHistory(true);
     try {
       const savedIds = JSON.parse(
-        localStorage.getItem("walico-transaction-ids") || "[]",
+        localStorage.getItem("walico-transaction-ids") || "[]"
       );
 
       if (savedIds.length === 0) {
@@ -56,7 +68,7 @@ export default function Home() {
 
       const results = await Promise.all(historyPromises);
       const validHistory = results.filter(
-        (item): item is TransactionHistory => item !== null,
+        (item): item is TransactionHistory => item !== null
       );
 
       // 作成日時の降順でソート
@@ -69,7 +81,7 @@ export default function Home() {
       const updatedIds = savedIds.filter((id: string) => validIds.includes(id));
       localStorage.setItem(
         "walico-transaction-ids",
-        JSON.stringify(updatedIds),
+        JSON.stringify(updatedIds)
       );
     } catch (error) {
       console.error("Error loading history:", error);
@@ -85,6 +97,24 @@ export default function Home() {
 
     // 履歴を読み込む
     loadHistory();
+
+    // セッションをチェック
+    const checkSession = async () => {
+      try {
+        const { data: session } = await authClient.getSession();
+        setIsLoggedIn(!!session);
+        if (session?.user) {
+          setUserImage(session.user.image || null);
+        }
+      } catch (error) {
+        console.error("Error checking session:", error);
+        setIsLoggedIn(false);
+      } finally {
+        setIsCheckingSession(false);
+      }
+    };
+
+    checkSession();
   }, [loadHistory]);
 
   const handleResume = () => {
@@ -117,9 +147,83 @@ export default function Home() {
     <div className="flex min-h-screen flex-col bg-white pb-40">
       {/* アプリ名 */}
       <div className="px-4 pt-12 pb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Walico</h1>
-        <p className="mt-1 text-xs text-gray-500">3秒で割り勘。</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">Walico</h1>
+            <p className="mt-1 text-xs text-gray-500">3秒で割り勘。</p>
+          </div>
+          {!isCheckingSession && (
+            <div>
+              {isLoggedIn ? (
+                <Link
+                  href="/dashboard"
+                  className="flex items-center justify-center rounded-full overflow-hidden border-2 border-gray-200 hover:border-gray-300 transition-colors"
+                >
+                  {userImage ? (
+                    <img
+                      src={userImage}
+                      alt="プロフィール"
+                      className="h-10 w-10 object-cover"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 flex items-center justify-center bg-gray-100">
+                      <User className="h-5 w-5 text-gray-600" />
+                    </div>
+                  )}
+                </Link>
+              ) : (
+                <Link
+                  href="/login"
+                  className="flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100"
+                >
+                  <User className="h-4 w-4" />
+                  <span>ログイン</span>
+                </Link>
+              )}
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* ダッシュボードへの導線（ログイン済みの場合のみ） */}
+      {!isCheckingSession && isLoggedIn && (
+        <div className="px-4 pb-4">
+          <Link
+            href="/dashboard"
+            className="flex items-center justify-between rounded-2xl border-2 border-emerald-200 bg-emerald-50 px-4 py-3 transition-colors hover:bg-emerald-100 active:bg-emerald-100"
+          >
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-emerald-500 p-2">
+                <LayoutDashboard className="h-5 w-5 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-bold text-emerald-700">
+                  ダッシュボード
+                </p>
+                <p className="text-xs text-emerald-600">
+                  送った請求・受け取った請求を確認
+                </p>
+              </div>
+            </div>
+            <div className="text-emerald-500">
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <title>次へ</title>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </div>
+          </Link>
+        </div>
+      )}
 
       {/* 履歴セクション */}
       <div className="px-4 pb-4">
@@ -140,9 +244,9 @@ export default function Home() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       {item.status === "paid" ? (
-                        <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                        <Check className="h-4 w-4 shrink-0 text-emerald-500" />
                       ) : (
-                        <Clock className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                        <Clock className="h-4 w-4 shrink-0 text-amber-500" />
                       )}
                       <span
                         className={`text-xs font-medium ${

@@ -29,6 +29,13 @@
       "when": 1767091660154,
       "tag": "0003_lumpy_iron_lad",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1767093448917,
+      "tag": "0004_thick_vance_astro",
+      "breakpoints": true
     }
   ]
 }

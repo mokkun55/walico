@@ -21,7 +21,7 @@ export const auth = betterAuth({
     line: {
       clientId: process.env.LINE_CLIENT_ID as string,
       clientSecret: process.env.LINE_CLIENT_SECRET as string,
-      scope: ["openid", "profile"],
+      scope: ["openid", "profile", "email"],
     },
   },
 });

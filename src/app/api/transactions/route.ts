@@ -1,12 +1,27 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { db } from "@/libs/db";
 import { transactions } from "@/libs/db/schema";
+import { auth } from "@/libs/auth";
 import { randomUUID } from "node:crypto";
 
 const EXPIRES_DAYS = 7;
 
 export async function POST(request: NextRequest) {
   try {
+    // セッションを確認（ログイン済みユーザーの場合、sender_idを取得）
+    let senderId: string | null = null;
+    try {
+      const session = await auth.api.getSession({
+        headers: request.headers,
+      });
+      if (session?.user) {
+        senderId = session.user.id;
+      }
+    } catch (error) {
+      // セッション取得に失敗しても続行（ログイン前でも利用可能）
+      console.log("Session check failed (user may not be logged in):", error);
+    }
+
     const body = await request.json();
 
     // バリデーション
@@ -48,11 +63,14 @@ export async function POST(request: NextRequest) {
       status: "pending",
       createdAt: now,
       expiresAt,
+      senderId: senderId,
+      recipientLineId: body.recipient_line_id ?? null,
     });
 
     return NextResponse.json({
       id,
       url: `/r/${id}`,
+      sender_id: senderId,
     });
   } catch (error) {
     console.error("Error creating transaction:", error);

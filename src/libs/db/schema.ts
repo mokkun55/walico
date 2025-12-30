@@ -15,10 +15,16 @@ export const transactions = sqliteTable(
       .default("pending"),
     createdAt: integer("created_at").notNull(), // Unix timestamp (秒)
     expiresAt: integer("expires_at").notNull(), // Unix timestamp (秒)
+    senderId: text("sender_id").references(() => users.id, {
+      onDelete: "set null",
+    }), // 送信者のユーザーID（ログイン済みの場合）
+    recipientLineId: text("recipient_line_id"), // 受信者のLINE ID（オプション）
   },
   (t) => [
     index("idx_transactions_created_at").on(t.createdAt),
     index("idx_transactions_expires_at").on(t.expiresAt),
+    index("idx_transactions_sender_id").on(t.senderId),
+    index("idx_transactions_recipient_line_id").on(t.recipientLineId),
   ]
 );
 

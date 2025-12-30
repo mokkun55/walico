@@ -1,10 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { db } from "@/libs/db";
-import { transactions } from "@/libs/db/schema";
-import { eq } from "drizzle-orm";
+import { transactions, accounts } from "@/libs/db/schema";
+import { eq, and } from "drizzle-orm";
+import { auth } from "@/libs/auth";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -33,6 +34,44 @@ export async function GET(
         { error: "Transaction has expired" },
         { status: 410 }
       );
+    }
+
+    // ログイン済みユーザーの場合、受信者情報を記録
+    try {
+      const session = await auth.api.getSession({
+        headers: request.headers,
+      });
+
+      if (session?.user) {
+        // ユーザーのLINEアカウント情報を取得
+        const userAccount = await db
+          .select({
+            accountId: accounts.accountId,
+          })
+          .from(accounts)
+          .where(
+            and(
+              eq(accounts.userId, session.user.id),
+              eq(accounts.providerId, "line")
+            )
+          )
+          .limit(1);
+
+        const lineUserId = userAccount[0]?.accountId;
+
+        // recipient_line_idが未設定の場合のみ更新（最初にアクセスした人を記録）
+        if (lineUserId && !transaction.recipientLineId) {
+          await db
+            .update(transactions)
+            .set({
+              recipientLineId: lineUserId,
+            })
+            .where(eq(transactions.id, id));
+        }
+      }
+    } catch (error) {
+      // セッション取得に失敗しても続行（ログイン前でも利用可能）
+      console.log("Session check failed (user may not be logged in):", error);
     }
 
     // items_jsonを配列に変換（nullの場合はそのまま）

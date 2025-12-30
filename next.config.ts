@@ -21,6 +21,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "images.unsplash.com",
       },
+      {
+        protocol: "https",
+        hostname: "*.line-scdn.net",
+      },
       // R2のパブリックURLが設定されている場合、そのドメインを許可
       ...(r2Hostname
         ? [
