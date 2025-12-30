@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     ) {
       return NextResponse.json(
         { error: "R2設定が不完全です。環境変数を確認してください。" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     if (!imageFile) {
       return NextResponse.json(
         { error: "画像ファイルが必要です" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
           error:
             "サポートされていない画像形式です。JPEG、PNG、WebPのみ対応しています。",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     if (imageFile.size > maxSize) {
       return NextResponse.json(
         { error: "画像サイズが大きすぎます。10MB以下にしてください。" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
     // URLが完全なURL（https://で始まる）であることを確認
     if (!publicUrl.startsWith("http://") && !publicUrl.startsWith("https://")) {
       throw new Error(
-        "R2_PUBLIC_URL must be a complete URL starting with http:// or https://"
+        "R2_PUBLIC_URL must be a complete URL starting with http:// or https://",
       );
     }
 
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
         error: "画像のアップロードに失敗しました",
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

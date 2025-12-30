@@ -21,7 +21,7 @@ export default function Home() {
     setIsLoadingHistory(true);
     try {
       const savedIds = JSON.parse(
-        localStorage.getItem("walico-transaction-ids") || "[]"
+        localStorage.getItem("walico-transaction-ids") || "[]",
       );
 
       if (savedIds.length === 0) {
@@ -56,7 +56,7 @@ export default function Home() {
 
       const results = await Promise.all(historyPromises);
       const validHistory = results.filter(
-        (item): item is TransactionHistory => item !== null
+        (item): item is TransactionHistory => item !== null,
       );
 
       // 作成日時の降順でソート
@@ -66,12 +66,10 @@ export default function Home() {
 
       // 無効なIDをlocalStorageから削除
       const validIds = validHistory.map((item) => item.id);
-      const updatedIds = savedIds.filter((id: string) =>
-        validIds.includes(id)
-      );
+      const updatedIds = savedIds.filter((id: string) => validIds.includes(id));
       localStorage.setItem(
         "walico-transaction-ids",
-        JSON.stringify(updatedIds)
+        JSON.stringify(updatedIds),
       );
     } catch (error) {
       console.error("Error loading history:", error);

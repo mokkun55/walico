@@ -127,7 +127,7 @@ function InputPageContent() {
           if (!uploadResponse.ok) {
             const errorData = await uploadResponse.json();
             throw new Error(
-              errorData.error || "画像のアップロードに失敗しました"
+              errorData.error || "画像のアップロードに失敗しました",
             );
           }
 
@@ -182,13 +182,13 @@ function InputPageContent() {
 
       // localStorageにトランザクションIDを保存
       const savedIds = JSON.parse(
-        localStorage.getItem("walico-transaction-ids") || "[]"
+        localStorage.getItem("walico-transaction-ids") || "[]",
       );
       if (!savedIds.includes(data.id)) {
         savedIds.push(data.id);
         localStorage.setItem(
           "walico-transaction-ids",
-          JSON.stringify(savedIds)
+          JSON.stringify(savedIds),
         );
       }
 
@@ -205,7 +205,7 @@ ${storeNameText} の分を計算したよ！
 
 ${transactionUrl}`;
       const lineUrl = `https://line.me/R/share?text=${encodeURIComponent(
-        lineMessage
+        lineMessage,
       )}`;
 
       // LINEアプリを開く
@@ -259,7 +259,7 @@ ${transactionUrl}`;
         } catch (error) {
           console.error("Error analyzing image:", error);
           setAnalysisError(
-            error instanceof Error ? error.message : "解析に失敗しました"
+            error instanceof Error ? error.message : "解析に失敗しました",
           );
         } finally {
           setIsAnalyzing(false);
@@ -276,12 +276,12 @@ ${transactionUrl}`;
     isDetailsOpen && editableItems.length > 0
       ? editableItems.reduce((sum, item) => sum + item.price, 0)
       : isAIMode
-      ? editableTotalAmount
-      : totalAmount;
+        ? editableTotalAmount
+        : totalAmount;
 
   // 割り勘計算
   const requestAmount = Math.round(
-    (currentTotalAmount * (100 - splitRatio)) / 100
+    (currentTotalAmount * (100 - splitRatio)) / 100,
   );
 
   // 明細モードでの計算（簡易版）
@@ -497,7 +497,7 @@ ${transactionUrl}`;
     try {
       // localStorageから最新のトランザクションIDを取得
       const savedIds = JSON.parse(
-        localStorage.getItem("walico-transaction-ids") || "[]"
+        localStorage.getItem("walico-transaction-ids") || "[]",
       );
       if (savedIds.length === 0) {
         alert("URLが見つかりません");
@@ -684,7 +684,7 @@ ${transactionUrl}`;
                 <span className="text-gray-500">
                   自分: ¥
                   {Math.round(
-                    (currentTotalAmount * splitRatio) / 100
+                    (currentTotalAmount * splitRatio) / 100,
                   ).toLocaleString()}
                 </span>
                 <span className="font-semibold text-gray-800">
@@ -741,7 +741,7 @@ ${transactionUrl}`;
                               onChange={(e) =>
                                 updateItemPrice(
                                   index,
-                                  Number(e.target.value) || 0
+                                  Number(e.target.value) || 0,
                                 )
                               }
                               className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-xs text-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
@@ -754,7 +754,7 @@ ${transactionUrl}`;
                             type="button"
                             onClick={() => toggleItemAssignment(index)}
                             className={`px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap ${getAssignmentColor(
-                              assignment
+                              assignment,
                             )}`}
                           >
                             {getAssignmentLabel(assignment)}

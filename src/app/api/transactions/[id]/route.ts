@@ -37,9 +37,7 @@ export async function GET(
 
     // items_jsonを配列に変換（nullの場合はそのまま）
     const itemsJson =
-      transaction.itemsJson !== null
-        ? JSON.parse(transaction.itemsJson)
-        : null;
+      transaction.itemsJson !== null ? JSON.parse(transaction.itemsJson) : null;
 
     // レスポンス形式に変換
     return NextResponse.json({
@@ -62,4 +60,3 @@ export async function GET(
     );
   }
 }
-

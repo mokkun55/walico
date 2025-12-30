@@ -2,10 +2,7 @@
 // npm install @google/genai mime
 // npm install -D @types/node
 
-import {
-  GoogleGenAI,
-  Type,
-} from '@google/genai';
+import { GoogleGenAI, Type } from "@google/genai";
 
 async function main() {
   const ai = new GoogleGenAI({
@@ -13,7 +10,7 @@ async function main() {
   });
   const config = {
     temperature: 0,
-    responseMimeType: 'application/json',
+    responseMimeType: "application/json",
     responseSchema: {
       type: Type.OBJECT,
       required: ["store_name", "date", "items", "total_amount"],
@@ -51,8 +48,8 @@ async function main() {
       },
     },
     systemInstruction: [
-        {
-          text: `あなたは高精度なレシート読み取りAIです。
+      {
+        text: `あなたは高精度なレシート読み取りAIです。
 ユーザーから送信されたレシート画像をOCR解析し、JSONスキーマに従ってデータを抽出してください。
 
 【ルール】
@@ -64,13 +61,13 @@ async function main() {
 - 単価情報（例：「100g当り」「@150」「単価」）
 - 重量の記載（例：「(g)」「(円)」）
 - 先頭や末尾の不要な記号や数字`,
-        }
+      },
     ],
   };
-  const model = 'gemini-2.0-flash-lite';
+  const model = "gemini-2.0-flash-lite";
   const contents = [
     {
-      role: 'user',
+      role: "user",
       parts: [
         {
           text: `INSERT_INPUT_HERE`,

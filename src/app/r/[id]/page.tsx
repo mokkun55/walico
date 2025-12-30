@@ -79,7 +79,7 @@ export default function ReceiverPage() {
         if (response.status === 400) {
           const error = await response.json();
           throw new Error(
-            error.error || "既に支払い済みか、無効なリクエストです"
+            error.error || "既に支払い済みか、無効なリクエストです",
           );
         } else if (response.status === 404) {
           throw new Error("トランザクションが見つかりません");
@@ -204,7 +204,7 @@ export default function ReceiverPage() {
               <span className="font-medium">
                 {calculateRatio(
                   transaction.total_amount,
-                  transaction.request_amount
+                  transaction.request_amount,
                 )}
                 % (あなた)
               </span>

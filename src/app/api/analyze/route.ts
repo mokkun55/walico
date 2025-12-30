@@ -13,7 +13,7 @@ const ReceiptAnalysisSchema = z.object({
       z.object({
         name: z.string().describe("商品名"),
         price: z.number().int().describe("商品の単価（円）"),
-      })
+      }),
     )
     .describe("購入した商品のリスト"),
   total_amount: z.number().int().describe("合計金額"),
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     if (!imageFile) {
       return NextResponse.json(
         { error: "画像ファイルが必要です" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
           error:
             "GEMINI_API_KEYまたはGOOGLE_GENERATIVE_AI_API_KEYが設定されていません",
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
         error: "レシートの解析に失敗しました",
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
